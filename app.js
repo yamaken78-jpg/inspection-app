@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", function(){
 
 // ===== Firebase =====
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
 const firebaseConfig = {
   apiKey: "AIzaSyAGBBJ_XoOtE2jBdzGlokm7zuzyUV4dRQs",
   authDomain: "tenkenapp-d4ea1.firebaseapp.com",
@@ -8,8 +11,8 @@ const firebaseConfig = {
   storageBucket: "tenkenapp-d4ea1.firebasestorage.app.appspot.com"
 };
 
-firebase.initializeApp(firebaseConfig);
-const storage = firebase.storage();
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // ===== GAS =====
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxHFO9fbQ7E2Kv42ssVUjCAGUsTNMoFB5WeRqEGN5ZbuRjM6IB2Su-bDPZ6v6fCgAkr/exec";
