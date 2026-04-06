@@ -1,24 +1,110 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>現場図面アプリ</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現場写真管理アプリ</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 10px; background:#f7f7f7; }
+  h1 { text-align:center; color:#0077cc; }
+  button { width:100%; padding:15px; font-size:18px; border-radius:10px; margin:5px 0; background:#0077cc; color:white; border:none; }
+  #preview { width:100%; margin-top:10px; border:2px solid #ccc; border-radius:8px; }
+  #photoList img { width:100px; height:100px; margin:5px; border:1px solid #ccc; border-radius:5px; object-fit:cover; }
+  #photoList { display:flex; flex-wrap:wrap; }
+</style>
 </head>
 <body>
 
-  <div id="app">
-    <select id="drawingSelect"></select>
+<h1>現場写真管理</h1>
 
-    <div id="canvasContainer">
-      <img id="drawingImage" src="" />
-      <canvas id="markerCanvas"></canvas>
-    </div>
+<input type="file" accept="image/*" capture="environment" id="cameraInput">
+<img id="preview" alt="撮影プレビュー">
 
-    <div id="coordList"></div>
-  </div>
+<input type="text" id="siteName" placeholder="現場名を入力" style="width:100%; padding:10px; margin-top:10px; font-size:16px;">
 
-  <script src="app.js"></script>
+<button id="uploadBtn">写真をアップロード</button>
+
+<h2>アップロード済み写真</h2>
+<div id="photoList"></div>
+
+<script type="module">
+  // Firebase SDKインポート
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+  // Firebase 設定
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  const cameraInput = document.getElementById('cameraInput');
+  const preview = document.getElementById('preview');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const siteNameInput = document.getElementById('siteName');
+  const photoList = document.getElementById('photoList');
+
+  let currentFile = null;
+
+  // カメラで撮影した写真のプレビュー表示
+  cameraInput.addEventListener('change', (event) => {
+    currentFile = event.target.files[0];
+    if(currentFile){
+      const reader = new FileReader();
+      reader.onload = e => { preview.src = e.target.result; };
+      reader.readAsDataURL(currentFile);
+    }
+  });
+
+  // Firebaseにアップロード
+  uploadBtn.addEventListener('click', async () => {
+    const siteName = siteNameInput.value.trim();
+    if(!currentFile || !siteName){
+      alert("現場名と写真を入力してください");
+      return;
+    }
+    const storageRef = ref(storage, `photos/${siteName}/${Date.now()}_${currentFile.name}`);
+    await uploadBytes(storageRef, currentFile);
+    const url = await getDownloadURL(storageRef);
+    await addDoc(collection(db, "photos"), {
+      site: siteName,
+      filename: currentFile.name,
+      timestamp: new Date(),
+      url: url
+    });
+    alert("アップロード完了");
+    preview.src = "";
+    cameraInput.value = "";
+    currentFile = null;
+    loadPhotos();
+    // ここでGoogle Drive API連携を呼び出すことも可能
+  });
+
+  // Firebaseから写真一覧取得
+  async function loadPhotos(){
+    photoList.innerHTML = "";
+    const querySnapshot = await getDocs(collection(db, "photos"));
+    querySnapshot.forEach(doc => {
+      const data = doc.data();
+      const img = document.createElement("img");
+      img.src = data.url;
+      img.title = `${data.site} / ${data.filename}`;
+      photoList.appendChild(img);
+    });
+  }
+
+  loadPhotos();
+
+</script>
+
 </body>
 </html>
