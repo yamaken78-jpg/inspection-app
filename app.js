@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(){
 
 // ===== Firebase =====
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAGBBJ_XoOtE2jBdzGlokm7zuzyUV4dRQs",
