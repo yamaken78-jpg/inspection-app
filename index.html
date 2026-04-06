@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h3>橋</h3>
+<select id="bridge"></select>
+
+<h3>図面</h3>
+<select id="drawing"></select>
+
+<div class="map-wrap">
+  <img id="map">
+  <div id="markers"></div>
+</div>
+
+<input type="file" id="photo" accept="image/*" capture="environment">
+<img id="preview">
+
+<textarea id="comment" placeholder="コメント"></textarea>
+
+<br>
+<button id="saveBtn">保存</button>
+<button id="deleteBtn">削除</button>
+<button id="uploadBtn">送信</button>
+
+<p id="pending"></p>
+<ul id="list"></ul>
+
+<!-- Firebase v8（安定版） -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
