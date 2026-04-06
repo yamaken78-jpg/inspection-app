@@ -5,10 +5,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAGBBJ_XoOtE2jBdzGlokm7zuzyUV4dRQs",
   authDomain: "tenkenapp-d4ea1.firebaseapp.com",
   projectId: "tenkenapp-d4ea1",
-  storageBucket: "tenkenapp-d4ea1.firebasestorage.app",
-  messagingSenderId: "588390222313",
-  appId: "1:588390222313:web:57c9d8b2a2191d376c2378",
-  measurementId: "G-JTJL3PCV04"
+  storageBucket: "tenkenapp-d4ea1.firebasestorage.app.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -65,7 +62,6 @@ async function loadDriveData(){
   }catch(e){
     console.error("GAS取得失敗", e);
 
-    // フォールバック
     bridges = [{ name:"テスト橋", drawings:[] }];
     initBridge();
   }
