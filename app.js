@@ -1,269 +1,269 @@
-document.addEventListener("DOMContentLoaded", function(){
+let records = [];
+let count = 1;
+let currentId = null;
+let currentMarker = null;
+let photoCount = 1;
+let db;
 
-// ===== Firebase =====
+// ===== IndexedDB =====
+const request = indexedDB.open("inspectionDB", 1);
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAGBBJ_XoOtE2jBdzGlokm7zuzyUV4dRQs",
-  authDomain: "tenkenapp-d4ea1.firebaseapp.com",
-  projectId: "tenkenapp-d4ea1",
-  storageBucket: "tenkenapp-d4ea1.firebasestorage.app.appspot.com"
+request.onupgradeneeded = function(e){
+  db = e.target.result;
+  db.createObjectStore("records", { keyPath: "id" });
 };
 
-firebase.initializeApp(firebaseConfig);
-const storage = firebase.storage();
+request.onsuccess = function(e){
+  db = e.target.result;
+  loadData();
+};
 
-// ===== GAS =====
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwEXiwDd-FZKfV9rsfiUlFz-nlXrDWXPRQyeGjBaHVVwY0heMMus8YdTJle0OtIoKXU/exec";
+// ===== 保存 =====
+function saveToDB(){
+  const tx = db.transaction("records", "readwrite");
+  const store = tx.objectStore("records");
+  records.forEach(r => store.put(r));
+}
 
-// ===== 変数 =====
-let bridges = [];
-let currentBridge;
-let currentDrawing;
-let records = [];
-let currentId = null;
-let count = 1;
+// ===== 読み込み =====
+function loadData(){
+  const tx = db.transaction("records", "readonly");
+  const store = tx.objectStore("records");
+
+  const req = store.getAll();
+
+  req.onsuccess = function(){
+    records = req.result || [];
+    updateUI();
+    redrawMarkers();
+
+    if(records.length > 0){
+      const maxId = Math.max(...records.map(r => Number(r.id)));
+      count = maxId + 1;
+    }
+  };
+}
 
 // ===== 画像圧縮 =====
 function compressImage(file){
-  return new Promise(resolve=>{
+  return new Promise(resolve => {
     const img = new Image();
     const reader = new FileReader();
 
     reader.onload = e => img.src = e.target.result;
 
-    img.onload = ()=>{
+    img.onload = function(){
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      const w = 800;
-      const scale = w / img.width;
+      const maxWidth = 1200;
+      let width = img.width;
+      let height = img.height;
 
-      canvas.width = w;
-      canvas.height = img.height * scale;
+      if(width > maxWidth){
+        height = height * (maxWidth / width);
+        width = maxWidth;
+      }
 
-      ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      resolve(canvas.toDataURL("image/jpeg",0.6));
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const compressed = canvas.toDataURL("image/jpeg", 0.7);
+      resolve(compressed);
     };
 
     reader.readAsDataURL(file);
   });
 }
 
-// ===== GAS取得 =====
-async function loadDriveData(){
-
-  try{
-    const res = await fetch(GAS_URL);
-    bridges = await res.json();
-
-    console.log("取得成功", bridges);
-
-    initBridge();
-
-  }catch(e){
-    console.error("GAS取得失敗", e);
-
-    bridges = [{ name:"テスト橋", drawings:[] }];
-    initBridge();
-  }
-}
-
-// ===== 橋 =====
-function initBridge(){
-
-  const sel = document.getElementById("bridge");
-  sel.innerHTML = "";
-
-  bridges.forEach((b,i)=>{
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = b.name;
-    sel.appendChild(opt);
-  });
-
-  currentBridge = bridges[0];
-  loadDrawing();
-
-  sel.onchange = ()=>{
-    currentBridge = bridges[sel.value];
-    loadDrawing();
-  };
-}
-
-// ===== 図面 =====
-function loadDrawing(){
-
-  const sel = document.getElementById("drawing");
-  sel.innerHTML = "";
-
-  currentBridge.drawings.forEach((d,i)=>{
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = d.name;
-    sel.appendChild(opt);
-  });
-
-  sel.onchange = changeMap;
-
-  if(currentBridge.drawings.length > 0){
-    changeMap();
-  }
-}
-
-// ===== 表示 =====
-function changeMap(){
-
-  currentDrawing =
-    currentBridge.drawings[
-      document.getElementById("drawing").value
-    ];
-
-  document.getElementById("map").src = currentDrawing.url;
-
-  redraw();
-}
-
-// ===== マーカー =====
-document.getElementById("map").onclick = function(e){
-
-  if(!currentDrawing) return;
+// ===== 図面クリック =====
+document.getElementById("map").addEventListener("click", function(e){
 
   const rect = e.target.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const drawing = document.getElementById("drawing").value;
 
-  const x = (e.clientX - rect.left)/rect.width;
-  const y = (e.clientY - rect.top)/rect.height;
+  const marker = document.createElement("div");
+  marker.innerText = count;
+  marker.style.left = x + "px";
+  marker.style.top = y + "px";
+  marker.style.color = "red";
+  marker.dataset.id = count;
 
-  records.push({
-    id: count,
-    x,y,
-    bridge: currentBridge.name,
-    drawing: currentDrawing.name,
-    uploaded:false
+  marker.dataset.x = x;
+  marker.dataset.y = y;
+  marker.dataset.drawing = drawing;
+
+  marker.addEventListener("click", function(e){
+    e.stopPropagation();
+
+    if(currentMarker) currentMarker.classList.remove("selected");
+
+    currentMarker = marker;
+    currentMarker.classList.add("selected");
+
+    currentId = this.dataset.id;
+
+    const data = records.find(r => r.id == currentId);
+    if(data){
+      document.getElementById("preview").src = data.image;
+      document.getElementById("comment").value = data.comment || "";
+    }
   });
 
+  document.getElementById("markers").appendChild(marker);
+
+  if(currentMarker) currentMarker.classList.remove("selected");
+  currentMarker = marker;
+  currentMarker.classList.add("selected");
+
   currentId = count;
-  count++;
 
   document.getElementById("photo").click();
-};
+  count++;
+});
 
-// ===== 写真 =====
-document.getElementById("photo").onchange = async function(e){
-
+// ===== 写真取得（圧縮＋保存）=====
+document.getElementById("photo").addEventListener("change", async function(e){
   const file = e.target.files[0];
   if(!file) return;
 
-  const img = await compressImage(file);
+  const imgData = await compressImage(file);
+  document.getElementById("preview").src = imgData;
 
-  document.getElementById("preview").src = img;
+  if(!currentId) return;
 
-  const rec = records.find(r=>r.id===currentId);
-  if(rec) rec.image = img;
+  const marker = document.querySelector(`[data-id='${currentId}']`);
 
-  redraw();
-  updateList();
-};
+  const x = marker?.dataset.x;
+  const y = marker?.dataset.y;
+  const drawing = marker?.dataset.drawing;
 
-// ===== 再描画 =====
-function redraw(){
+  const index = records.findIndex(r => r.id == currentId);
 
-  const box = document.getElementById("markers");
-  box.innerHTML="";
+  if(index !== -1){
+    records[index].image = imgData;
+    records[index].uploaded = false;
+  } else {
+    records.push({
+      id: currentId,
+      image: imgData,
+      x,
+      y,
+      drawing,
+      uploaded: false
+    });
+  }
 
-  records.forEach(r=>{
-    if(r.drawing === currentDrawing?.name){
+  saveToDB();
+});
 
-      const m = document.createElement("div");
-      m.innerText = r.id;
+// ===== マーカー再描画 =====
+function redrawMarkers(){
+  const container = document.getElementById("markers");
+  container.innerHTML = "";
 
-      m.style.left = (r.x*100)+"%";
-      m.style.top = (r.y*100)+"%";
+  const currentDrawing = document.getElementById("drawing").value;
 
-      m.onclick = (e)=>{
+  records.forEach(r => {
+
+    // 🔴 今の図面だけ表示
+    if(r.x && r.drawing === currentDrawing){
+
+      const marker = document.createElement("div");
+      marker.innerText = r.id;
+      marker.style.left = r.x + "px";
+      marker.style.top = r.y + "px";
+      marker.style.color = "red";
+      marker.dataset.id = r.id;
+
+      marker.addEventListener("click", function(e){
         e.stopPropagation();
-        selectRecord(r.id);
-      };
 
-      box.appendChild(m);
+        if(currentMarker) currentMarker.classList.remove("selected");
+
+        currentMarker = marker;
+        currentMarker.classList.add("selected");
+
+        currentId = r.id;
+
+        document.getElementById("preview").src = r.image;
+        document.getElementById("comment").value = r.comment || "";
+      });
+
+      container.appendChild(marker);
     }
+
   });
 }
 
-// ===== 選択 =====
-function selectRecord(id){
-
-  currentId = id;
-
-  const r = records.find(x=>x.id===id);
-
-  document.getElementById("preview").src = r.image || "";
-  document.getElementById("comment").value = r.comment || "";
-}
-
 // ===== 保存 =====
-document.getElementById("saveBtn").onclick = function(){
+function saveData(){
+  const status = document.getElementById("status").value;
+  const comment = document.getElementById("comment").value;
 
-  const r = records.find(x=>x.id===currentId);
-  if(r){
-    r.comment = document.getElementById("comment").value;
+  const index = records.findIndex(r => r.id == currentId);
+
+  if(index !== -1){
+    records[index].status = status;
+    records[index].comment = comment;
   }
 
-  updateList();
-};
+  updateUI();
+  saveToDB();
+}
 
-// ===== 削除 =====
-document.getElementById("deleteBtn").onclick = function(){
+// ===== UI更新 =====
+function updateUI(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
 
-  records = records.filter(r=>r.id!==currentId);
-
-  redraw();
-  updateList();
-};
-
-// ===== 一覧 =====
-function updateList(){
-
-  const ul = document.getElementById("list");
-  ul.innerHTML = "";
+  const pending = records.filter(r => !r.uploaded);
+  document.getElementById("pending").innerText =
+    "未送信：" + pending.length;
 
   records.forEach(r=>{
     const li = document.createElement("li");
 
-    li.innerText =
-      `${r.bridge}/${r.drawing}/${r.id}/${r.uploaded?"済":"未"}`;
+    li.innerText = `No.${r.id}` + (r.x ? "" : "（位置なし）");
 
-    li.onclick = ()=>selectRecord(r.id);
+    li.onclick = function(){
+      currentId = r.id;
+      document.getElementById("preview").src = r.image;
+      document.getElementById("comment").value = r.comment || "";
+    };
 
-    ul.appendChild(li);
+    list.appendChild(li);
   });
-
-  const pending = records.filter(r=>!r.uploaded).length;
-  document.getElementById("pending").innerText =
-    `未送信：${pending}`;
 }
 
-// ===== 送信 =====
-document.getElementById("uploadBtn").onclick = async function(){
+// ===== 図面切替 =====
+function changeDrawing(){
+  document.getElementById("map").src =
+    document.getElementById("drawing").value;
 
-  for(const r of records){
+  currentMarker = null;
+  currentId = null;
 
-    if(r.uploaded || !r.image) continue;
+  redrawMarkers();
+}
 
-    const name =
-      `${r.bridge}/${r.drawing}/${r.id}.jpg`;
-
-    const ref = storage.ref().child(name);
-
-    await ref.putString(r.image,'data_url');
-
-    r.uploaded = true;
+// ===== 取り直し =====
+function retakePhoto(){
+  if(!currentId){
+    alert("マーカー選択してください");
+    return;
   }
+  document.getElementById("photo").click();
+}
 
-  updateList();
+// ===== 送信（仮）=====
+function uploadAll(){
+  records.forEach(r => r.uploaded = true);
   alert("送信完了");
-};
-
-// ===== 起動 =====
-loadDriveData();
-
-});
+  updateUI();
+  saveToDB();
+}

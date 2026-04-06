@@ -1,41 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>橋梁点検アプリ</title>
 <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h3>橋</h3>
-<select id="bridge"></select>
+<h2>橋梁点検アプリ</h2>
 
-<h3>図面</h3>
-<select id="drawing"></select>
+<select id="bridge">
+  <option value="A橋">A橋</option>
+  <option value="B橋">B橋</option>
+</select>
+
+<select id="drawing" onchange="changeDrawing()">
+  <option value="zumen1.jpg">図面①</option>
+  <option value="zumen2.jpg">図面②</option>
+</select>
+
+<p id="pending"></p>
 
 <div class="map-wrap">
-  <img id="map">
+  <img id="map" src="zumen1.jpg">
   <div id="markers"></div>
 </div>
 
 <input type="file" id="photo" accept="image/*" capture="environment">
+
+<h3>プレビュー</h3>
 <img id="preview">
 
-<textarea id="comment" placeholder="コメント"></textarea>
-
 <br>
-<button id="saveBtn">保存</button>
-<button id="deleteBtn">削除</button>
-<button id="uploadBtn">送信</button>
+<button onclick="retakePhoto()">取り直し</button>
 
-<p id="pending"></p>
+<h3>入力</h3>
+<select id="status">
+  <option>ひび割れ</option>
+  <option>剥離</option>
+  <option>漏水</option>
+</select>
+
+<input type="text" id="comment" placeholder="コメント">
+
+<button onclick="saveData()">保存</button>
+
+<h3>一覧</h3>
 <ul id="list"></ul>
 
-<!-- Firebase v8（安定版） -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<button onclick="uploadAll()">送信（仮）</button>
 
 <script src="app.js"></script>
-
 </body>
 </html>

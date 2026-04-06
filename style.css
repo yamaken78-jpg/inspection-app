@@ -1,13 +1,26 @@
-.map-wrap { position: relative; }
-#map { width:100%; }
-#markers { position:absolute; width:100%; height:100%; }
+body {
+  font-family: sans-serif;
+}
 
-#markers div{
- position:absolute;
- transform:translate(-50%,-50%);
- background:red;
- color:white;
- width:30px;
- height:30px;
- border-radius:50%;
+.map-wrap {
+  position: relative;
+}
+
+#map {
+  width: 100%;
+}
+
+#markers div {
+  position: absolute;
+  font-weight: bold;
+  cursor: pointer;
+  color: red;
+}
+
+.selected {
+  background: yellow;
+}
+
+#preview {
+  width: 200px;
 }
