@@ -1,26 +1,25 @@
 body {
+  margin: 0;
   font-family: sans-serif;
 }
 
-.map-wrap {
-  position: relative;
+#app {
+  padding: 10px;
 }
 
-#map {
+#canvasContainer {
+  position: relative;
   width: 100%;
 }
 
-#markers div {
+#drawingImage {
+  width: 100%;
+  display: block;
+}
+
+#markerCanvas {
   position: absolute;
-  font-weight: bold;
-  cursor: pointer;
-  color: red;
-}
-
-.selected {
-  background: yellow;
-}
-
-#preview {
-  width: 200px;
+  top: 0;
+  left: 0;
+  touch-action: none; /* ← iPhone対策 */
 }
