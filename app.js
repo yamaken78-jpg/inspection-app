@@ -11,8 +11,8 @@ const firebaseConfig = {
   storageBucket: "tenkenapp-d4ea1.firebasestorage.app.appspot.com"
 };
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+firebase.initializeApp(firebaseConfig);
+const storage = firebase.storage();
 
 // ===== GAS =====
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwEXiwDd-FZKfV9rsfiUlFz-nlXrDWXPRQyeGjBaHVVwY0heMMus8YdTJle0OtIoKXU/exec";
