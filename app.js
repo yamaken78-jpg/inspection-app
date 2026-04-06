@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
 // ===== GAS =====
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxHFO9fbQ7E2Kv42ssVUjCAGUsTNMoFB5WeRqEGN5ZbuRjM6IB2Su-bDPZ6v6fCgAkr/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwEXiwDd-FZKfV9rsfiUlFz-nlXrDWXPRQyeGjBaHVVwY0heMMus8YdTJle0OtIoKXU/exec";
 
 // ===== 変数 =====
 let bridges = [];
