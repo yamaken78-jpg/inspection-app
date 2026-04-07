@@ -154,7 +154,7 @@ function draw(){
 
 // ===== 送信 =====
 async function sendData(data){
-  const url = "YOUR_WEBAPP_URL"; // ←変更
+  const url = "https://script.google.com/macros/s/AKfycbyKLwuKSwacD_hKFIrf1_edh6SVoUdOoAIf5fmwkBkW3keLCRYrvlBIUlXyQMtC8wHhOQ/exec"; // ←変更
 
   await fetch(url, {
     method: "POST",
