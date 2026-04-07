@@ -22,7 +22,13 @@ img.onload = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  scale = Math.min(vw / img.width, vh / img.height);
+  // 👇 ここを調整（重要）
+  const margin = 0.9; // 90%表示（余白あり）
+
+  scale = Math.min(
+    (vw * margin) / img.width,
+    (vh * margin) / img.height
+  );
 
   posX = (vw - img.width * scale) / 2;
   posY = (vh - img.height * scale) / 2;
