@@ -1,70 +1,98 @@
+const img = document.getElementById("image");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-
-let img = new Image();
-img.src = "sample.jpg";
+const cameraInput = document.getElementById("camera");
 
 let points = [];
+let currentPoint = null;
 
+// 画像読み込み後にサイズ合わせ
 img.onload = () => {
   canvas.width = img.width;
   canvas.height = img.height;
   draw();
 };
 
-// タップで座標取得
-canvas.addEventListener("click", function(e){
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+// タップ（画像側で取得）
+img.addEventListener("click", function(e){
+  const rect = img.getBoundingClientRect();
 
-  const point = {
-    x: x / canvas.width,
-    y: y / canvas.height
-  };
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
 
-  points.push(point);
-  draw();
+  currentPoint = { x, y };
+
+  cameraInput.click();
 });
 
-// 描画処理（番号のみ）
-function draw(){
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, 0, 0);
+// 写真撮影後
+cameraInput.addEventListener("change", async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
 
-  ctx.fillStyle = "red";
-  ctx.font = "16px Arial";
+  const base64 = await fileToBase64(file);
+
+  const index = points.length + 1;
+  const plotNumber = "B001-" + String(index).padStart(3,"0");
+
+  const pointData = {
+    ...currentPoint,
+    plotNumber,
+    photoBase64: base64
+  };
+
+  points.push(pointData);
+  draw();
+
+  await sendData(pointData);
+});
+
+// 描画
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.font = "bold 20px Arial";
 
   points.forEach((p, index) => {
     const x = p.x * canvas.width;
     const y = p.y * canvas.height;
 
-    // 番号だけ表示
-    ctx.fillText(index + 1, x, y);
+    ctx.fillStyle = "white";
+    ctx.fillRect(x-10, y-18, 28, 22);
+
+    ctx.fillStyle = "red";
+    ctx.fillText(index+1, x, y);
   });
 }
 
-// データ送信
-async function sendData(){
-  const url = "https://script.google.com/macros/s/AKfycbyKLwuKSwacD_hKFIrf1_edh6SVoUdOoAIf5fmwkBkW3keLCRYrvlBIUlXyQMtC8wHhOQ/exec";
+// 送信
+async function sendData(data){
+  const url = "YOUR_WEBAPP_URL";
 
-  for(let i=0; i<points.length; i++){
-    const payload = {
-      bridgeId: "B001",
-      plotNumber: "B001-" + String(i+1).padStart(3,"0"),
-      x: points[i].x,
-      y: points[i].y,
-      damageType: "ひび割れ",
-      damageSize: "3cm",
-      damageLevel: "中",
-      note: "テスト"
-    };
+  const payload = {
+    bridgeId: "B001",
+    plotNumber: data.plotNumber,
+    x: data.x,
+    y: data.y,
+    damageType: "ひび割れ",
+    damageSize: "3cm",
+    damageLevel: "中",
+    note: "現場記録",
+    photoBase64: data.photoBase64
+  };
 
-    await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-  }
+  await fetch(url, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
 
-  alert("送信完了！");
+// Base64変換
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
