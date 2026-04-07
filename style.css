@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* 表示領域 */
+#viewer {
+  width: 100vw;
+  height: 100vh;
+  background: #333;
+  touch-action: none;
+}
+
+/* 図面コンテナ */
+#container {
+  position: absolute;
+  transform-origin: 0 0;
+}
+
+/* 図面 */
+#image {
+  display: block;
+}
+
+/* プロット描画 */
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
