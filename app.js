@@ -6,14 +6,32 @@ const cameraInput = document.getElementById("camera");
 let points = [];
 let currentPoint = null;
 
-// 画像読み込み後にサイズ合わせ
+// ===== 画像読み込み =====
 img.onload = () => {
-  canvas.width = img.width;
-  canvas.height = img.height;
+  resizeCanvas();
   draw();
 };
 
-// タップ（画像側で取得）
+// ===== リサイズ対応（最重要）=====
+function resizeCanvas(){
+  const rect = img.getBoundingClientRect();
+
+  // 表示サイズに合わせる
+  canvas.style.width = rect.width + "px";
+  canvas.style.height = rect.height + "px";
+
+  // 内部解像度も同期（ズレ防止）
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+
+// ===== 画面ズーム・回転対応 =====
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  draw();
+});
+
+// ===== タップ取得 =====
 img.addEventListener("click", function(e){
   const rect = img.getBoundingClientRect();
 
@@ -25,7 +43,7 @@ img.addEventListener("click", function(e){
   cameraInput.click();
 });
 
-// 写真撮影後
+// ===== 写真撮影 =====
 cameraInput.addEventListener("change", async function(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -47,25 +65,36 @@ cameraInput.addEventListener("change", async function(e){
   await sendData(pointData);
 });
 
-// 描画
+// ===== 描画（ズーム対応）=====
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  ctx.font = "bold 20px Arial";
+  const rect = img.getBoundingClientRect();
+
+  // フォントサイズをズームに応じて調整
+  const scale = rect.width / img.naturalWidth;
+  ctx.font = `bold ${20 * scale}px Arial`;
 
   points.forEach((p, index) => {
     const x = p.x * canvas.width;
     const y = p.y * canvas.height;
 
+    // 背景（スケール対応）
     ctx.fillStyle = "white";
-    ctx.fillRect(x-10, y-18, 28, 22);
+    ctx.fillRect(
+      x - 10 * scale,
+      y - 18 * scale,
+      28 * scale,
+      22 * scale
+    );
 
+    // 番号
     ctx.fillStyle = "red";
     ctx.fillText(index+1, x, y);
   });
 }
 
-// 送信
+// ===== 送信 =====
 async function sendData(data){
   const url = "YOUR_WEBAPP_URL";
 
@@ -87,7 +116,7 @@ async function sendData(data){
   });
 }
 
-// Base64変換
+// ===== Base64変換 =====
 function fileToBase64(file){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
