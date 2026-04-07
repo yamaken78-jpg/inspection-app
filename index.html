@@ -1,22 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>橋梁点検アプリ</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; }
-    #canvas { border:1px solid #000; touch-action: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>橋梁点検アプリ</title>
+
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+
+  /* スクロール領域 */
+  #viewer {
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: #ddd;
+  }
+
+  /* 図面コンテナ */
+  #container {
+    position: relative;
+    display: inline-block;
+  }
+
+  img {
+    display: block;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none; /* ←重要 */
+  }
+</style>
 </head>
+
 <body>
 
-<h2>橋梁点検サンプル</h2>
+<div id="viewer">
+  <div id="container">
+    <img id="image" src="sample.jpg">
+    <canvas id="canvas"></canvas>
+  </div>
+</div>
 
-<canvas id="canvas"></canvas>
-
-<br><br>
-
-<button onclick="sendData()">データ送信</button>
+<input type="file" id="camera" accept="image/*" capture="environment" style="display:none">
 
 <script src="app.js"></script>
 
